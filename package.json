@@ -16,13 +16,14 @@
     "langchain",
     "vector-search"
   ],
-  "author": "",
+  "author": "Abhinav Suri",
   "license": "ISC",
   "dependencies": {
     "@langchain/community": "^1.1.28",
     "@langchain/core": "^1.1.44",
     "@langchain/openai": "^1.4.5",
     "@langchain/qdrant": "^1.0.2",
+    "@langchain/textsplitters": "^0.1.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

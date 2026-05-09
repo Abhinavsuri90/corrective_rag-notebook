@@ -2,6 +2,8 @@
 
 A **RAG-powered** (Retrieval-Augmented Generation) application inspired by Google NotebookLM. Upload any PDF or text document and have a natural-language conversation with it — answers are **grounded in the document's content**, not hallucinated by the LLM.
 
+🔗 **[Live Demo →](https://notebooklm-rag.onrender.com)**  ·  **[GitHub →](https://github.com/Abhinavsuri90/notebookllm_rag)**
+
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4.1--mini-blue)
 ![Qdrant](https://img.shields.io/badge/Vector_DB-Qdrant-red)
@@ -87,8 +89,8 @@ It starts with the most semantically meaningful boundary and falls back to small
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/notebooklm-rag.git
-cd notebooklm-rag
+git clone https://github.com/Abhinavsuri90/notebookllm_rag.git
+cd notebookllm_rag
 
 # 2. Install dependencies
 npm install --legacy-peer-deps
