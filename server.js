@@ -254,8 +254,53 @@ app.post("/api/chat", async (req, res) => {
 
     console.log(`   ✔ Retrieved ${relevantChunks.length} chunk(s)`);
 
+    // --- CRAG Evaluation Step ---
+    console.log(`   ✔ Retrieved ${relevantChunks.length} chunk(s), starting evaluation...`);
+    
+    const evaluationPromises = relevantChunks.map(async (chunk) => {
+      const gradingPrompt = `You are a grader assessing relevance of a retrieved document to a user question.
+User question: "${query}"
+Document context:
+${chunk.pageContent}
+
+If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant.
+Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question.
+Answer ONLY with 'yes' or 'no'.`;
+
+      try {
+        const evalResponse = await getOpenAI().chat.completions.create({
+          model: "deepseek/deepseek-chat",
+          messages: [{ role: "user", content: gradingPrompt }],
+          temperature: 0,
+        });
+        const grade = evalResponse.choices[0].message.content.trim().toLowerCase();
+        const isRelevant = grade.includes("yes");
+        return { chunk, isRelevant };
+      } catch (err) {
+        console.error("Evaluation error, defaulting to relevant:", err);
+        return { chunk, isRelevant: true }; // Fallback to keep if eval fails
+      }
+    });
+
+    const evaluatedChunks = await Promise.all(evaluationPromises);
+    const filteredChunks = evaluatedChunks.filter((c) => c.isRelevant).map((c) => c.chunk);
+    
+    console.log(`   ✔ Evaluation complete: ${filteredChunks.length} relevant, ${relevantChunks.length - filteredChunks.length} discarded.`);
+
+    if (filteredChunks.length === 0) {
+       return res.json({
+         answer: "I couldn't find relevant information about that in the uploaded document. Please ask something else or provide more context.",
+         sources: [],
+         evaluation: {
+           total: relevantChunks.length,
+           accepted: 0,
+           rejected: relevantChunks.length
+         }
+       });
+    }
+
     // Build context string with page numbers for citation
-    const contextBlocks = relevantChunks.map((chunk, i) => {
+    const contextBlocks = filteredChunks.map((chunk, i) => {
       const page = chunk.metadata?.loc?.pageNumber ?? chunk.metadata?.page ?? "N/A";
       return `[Chunk ${i + 1} | Page ${page}]\n${chunk.pageContent}`;
     });
@@ -275,7 +320,7 @@ DOCUMENT CONTEXT:
 ${context}`;
 
     const response = await getOpenAI().chat.completions.create({
-      model: "openai/gpt-4.1-mini",
+      model: "deepseek/deepseek-chat",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: query },
@@ -288,10 +333,15 @@ ${context}`;
 
     res.json({
       answer,
-      sources: relevantChunks.map((chunk) => ({
+      sources: filteredChunks.map((chunk) => ({
         page: chunk.metadata?.loc?.pageNumber ?? chunk.metadata?.page ?? "N/A",
         preview: chunk.pageContent.substring(0, 200) + "…",
       })),
+      evaluation: {
+        total: relevantChunks.length,
+        accepted: filteredChunks.length,
+        rejected: relevantChunks.length - filteredChunks.length
+      }
     });
   } catch (err) {
     console.error("Chat error:", err);

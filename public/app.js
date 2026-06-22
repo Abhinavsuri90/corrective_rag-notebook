@@ -1,8 +1,8 @@
 /**
- * NotebookLM RAG — Frontend
+ * CRAG — Frontend Logic
  */
 
-// ── DOM ──────────────────────────────────────────────────────────────────────
+// ── DOM Elements ─────────────────────────────────────────────────────────────
 const uploadSection     = document.getElementById("upload-section");
 const processingSection = document.getElementById("processing-section");
 const chatSection       = document.getElementById("chat-section");
@@ -31,17 +31,6 @@ let isProcessing = false;
 function show(el) { el.classList.remove("hidden"); }
 function hide(el) { el.classList.add("hidden"); }
 
-function showToast(msg, type = "error") {
-  const old = document.querySelector(".toast");
-  if (old) old.remove();
-  const t = document.createElement("div");
-  t.className = `toast toast-${type}`;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  requestAnimationFrame(() => t.classList.add("show"));
-  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 400); }, 4000);
-}
-
 function formatAnswer(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -54,25 +43,35 @@ function formatAnswer(text) {
     .replace(/^/, "<p>").replace(/$/, "</p>");
 }
 
-function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
-function scrollBottom() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+function escapeHtml(s) { 
+  const d = document.createElement("div"); 
+  d.textContent = s; 
+  return d.innerHTML; 
+}
+function scrollBottom() { 
+  chatMessages.scrollTop = chatMessages.scrollHeight; 
+}
 
 // ── File Input ───────────────────────────────────────────────────────────────
 fileInput.addEventListener("change", () => {
   if (fileInput.files.length) {
-    fileLabel.innerHTML = `<strong style="color:var(--green)">${fileInput.files[0].name}</strong>`;
+    fileLabel.innerHTML = `Selected: <strong>${fileInput.files[0].name}</strong>`;
     dropZone.classList.add("has-file");
     uploadBtn.disabled = false;
   }
 });
 
-dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+dropZone.addEventListener("dragover", e => { 
+  e.preventDefault(); 
+  dropZone.classList.add("dragover"); 
+});
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
 dropZone.addEventListener("drop", e => {
-  e.preventDefault(); dropZone.classList.remove("drag-over");
+  e.preventDefault(); 
+  dropZone.classList.remove("dragover");
   if (e.dataTransfer.files.length) {
     fileInput.files = e.dataTransfer.files;
-    fileLabel.innerHTML = `<strong style="color:var(--green)">${e.dataTransfer.files[0].name}</strong>`;
+    fileLabel.innerHTML = `Selected: <strong>${e.dataTransfer.files[0].name}</strong>`;
     dropZone.classList.add("has-file");
     uploadBtn.disabled = false;
   }
@@ -88,6 +87,7 @@ uploadForm.addEventListener("submit", async e => {
   uploadBtn.disabled = true;
 
   // Switch to processing view
+  uploadSection.classList.remove("active-section");
   hide(uploadSection);
   show(processingSection);
 
@@ -95,10 +95,18 @@ uploadForm.addEventListener("submit", async e => {
   const steps = ["step-load", "step-chunk", "step-embed", "step-store"];
   let cur = 0;
   const iv = setInterval(() => {
-    if (cur > 0) { const prev = document.getElementById(steps[cur-1]); prev.classList.remove("active"); prev.classList.add("done"); }
-    if (cur < steps.length) { document.getElementById(steps[cur]).classList.add("active"); cur++; }
-    else clearInterval(iv);
-  }, 700);
+    if (cur > 0) { 
+      const prev = document.getElementById(steps[cur-1]); 
+      prev.classList.remove("active"); 
+      prev.classList.add("done"); 
+    }
+    if (cur < steps.length) { 
+      document.getElementById(steps[cur]).classList.add("active"); 
+      cur++; 
+    } else {
+      clearInterval(iv);
+    }
+  }, 800);
 
   try {
     const fd = new FormData();
@@ -109,7 +117,11 @@ uploadForm.addEventListener("submit", async e => {
 
     // Finish all steps
     clearInterval(iv);
-    steps.forEach(id => { const el = document.getElementById(id); el.classList.remove("active"); el.classList.add("done"); });
+    steps.forEach(id => { 
+      const el = document.getElementById(id); 
+      el.classList.remove("active"); 
+      el.classList.add("done"); 
+    });
 
     await new Promise(r => setTimeout(r, 600));
 
@@ -120,16 +132,19 @@ uploadForm.addEventListener("submit", async e => {
     hide(processingSection);
     show(chatSection);
     chatInput.focus();
-    showToast("Document processed successfully!", "success");
   } catch (err) {
-    showToast(err.message);
+    alert(err.message);
     hide(processingSection);
     show(uploadSection);
+    uploadSection.classList.add("active-section");
   } finally {
     isProcessing = false;
     show(btnText); hide(btnLoader);
     uploadBtn.disabled = false;
-    steps.forEach(id => { const el = document.getElementById(id); el.classList.remove("active", "done"); });
+    steps.forEach(id => { 
+      const el = document.getElementById(id); 
+      el.classList.remove("active", "done"); 
+    });
   }
 });
 
@@ -144,6 +159,9 @@ chatForm.addEventListener("submit", async e => {
 
   addMessage(query, "user");
   chatInput.value = "";
+  chatInput.disabled = true;
+  sendBtn.disabled = true;
+  
   const typing = addTyping();
   scrollBottom();
 
@@ -155,60 +173,71 @@ chatForm.addEventListener("submit", async e => {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Chat failed");
+    
     typing.remove();
-    addMessage(data.answer, "ai", data.sources);
+    addAiMessage(data);
     scrollBottom();
   } catch (err) {
     typing.remove();
-    showToast(err.message);
+    alert("Error: " + err.message);
+  } finally {
+    chatInput.disabled = false;
+    sendBtn.disabled = false;
+    chatInput.focus();
   }
 });
 
-function addMessage(text, role, sources = null) {
+function addMessage(text, role) {
   const wrap = document.createElement("div");
-  wrap.className = `message message-${role}`;
+  wrap.className = `message msg-${role}`;
+  wrap.innerHTML = role === "user" ? escapeHtml(text) : formatAnswer(text);
+  chatMessages.appendChild(wrap);
+}
 
-  const avatar = document.createElement("div");
-  avatar.className = "msg-avatar";
-  avatar.textContent = role === "user" ? "You" : "AI";
-
-  const body = document.createElement("div");
-  body.className = "msg-body";
-
-  if (role === "user") {
-    body.innerHTML = `<p>${escapeHtml(text)}</p>`;
-  } else {
-    body.innerHTML = formatAnswer(text);
-    if (sources && sources.length) {
-      const sd = document.createElement("div");
-      sd.className = "sources";
-      sd.innerHTML = `<div class="sources-label">📄 Sources</div>`;
-      sources.forEach(s => {
-        const si = document.createElement("div");
-        si.className = "source-item";
-        si.textContent = `Page ${s.page}: ${s.preview}`;
-        sd.appendChild(si);
-      });
-      body.appendChild(sd);
-    }
+function addAiMessage(data) {
+  const wrap = document.createElement("div");
+  wrap.className = `message msg-ai`;
+  
+  let html = "";
+  
+  // Render CRAG Evaluation Block
+  if (data.evaluation) {
+    const { total, accepted, rejected } = data.evaluation;
+    html += `
+      <div class="crag-eval-block">
+        <div class="crag-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          CRAG Source Evaluation
+        </div>
+        <div class="crag-stats">
+          <div class="crag-stat">Total Retrieved: ${total}</div>
+          <div class="crag-stat accepted">Relevant: ${accepted}</div>
+          <div class="crag-stat rejected">Discarded: ${rejected}</div>
+        </div>
+      </div>
+    `;
   }
-
-  wrap.appendChild(avatar);
-  wrap.appendChild(body);
+  
+  // Render Answer
+  html += formatAnswer(data.answer);
+  
+  // Render Sources
+  if (data.sources && data.sources.length) {
+    html += `<div class="sources-list"><strong>Sources used:</strong>`;
+    data.sources.forEach(s => {
+      html += `<div class="source-item">Page ${escapeHtml(String(s.page))}: ${escapeHtml(s.preview)}</div>`;
+    });
+    html += `</div>`;
+  }
+  
+  wrap.innerHTML = html;
   chatMessages.appendChild(wrap);
 }
 
 function addTyping() {
   const wrap = document.createElement("div");
-  wrap.className = "message message-ai";
-  const avatar = document.createElement("div");
-  avatar.className = "msg-avatar";
-  avatar.textContent = "AI";
-  const body = document.createElement("div");
-  body.className = "msg-body";
-  body.innerHTML = `<div class="typing-dots"><span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span></div>`;
-  wrap.appendChild(avatar);
-  wrap.appendChild(body);
+  wrap.className = "message msg-ai typing-indicator";
+  wrap.innerHTML = `<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>`;
   chatMessages.appendChild(wrap);
   return wrap;
 }
@@ -226,19 +255,23 @@ newDocBtn.addEventListener("click", () => {
   currentCollection = null;
   hide(chatSection);
   show(uploadSection);
+  uploadSection.classList.add("active-section");
+  
   fileInput.value = "";
-  fileLabel.innerHTML = 'Drop your file here or <strong>browse</strong>';
+  fileLabel.innerHTML = 'Drag & drop your file or <span class="browse-link">browse</span>';
   dropZone.classList.remove("has-file");
   uploadBtn.disabled = true;
+  
   chatMessages.innerHTML = `
     <div class="welcome-msg" id="welcome-msg">
-      <div class="welcome-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-      <h3>Your document is ready!</h3>
-      <p>Ask any question — answers come only from your uploaded document.</p>
+      <div class="welcome-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      </div>
+      <h3>Knowledge Base Ready</h3>
+      <p>Ask anything. Our Corrective RAG ensures answers are strictly grounded in your document.</p>
       <div class="chips">
-        <button class="chip" data-query="What is this document about?">📄 What is this about?</button>
-        <button class="chip" data-query="Summarize the key points">📝 Key points</button>
-        <button class="chip" data-query="What are the main topics covered?">🔍 Main topics</button>
+        <button class="chip" data-query="What is the main topic of this document?">Summarize the main topic</button>
+        <button class="chip" data-query="What are the key takeaways?">List key takeaways</button>
       </div>
     </div>`;
 });

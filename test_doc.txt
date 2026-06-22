@@ -1,0 +1,8 @@
+DeepSeek V3/V4 is an advanced artificial intelligence model developed by DeepSeek. It specializes in reasoning, coding, and mathematical problem-solving. This document is meant to test the RAG implementation.
+
+Key capabilities of DeepSeek:
+1. Fast inference speeds.
+2. Excellent tool use and function calling.
+3. High performance on benchmark tests.
+
+To test the corrective RAG, ask about DeepSeek's capabilities. If you ask about how to bake a cake, the system should reject the chunks because baking is not mentioned in this document.

@@ -1,188 +1,75 @@
-# 📚 NotebookLM RAG — Chat with Your Documents
+# NexusRAG: Corrective RAG & World-Class Document Chat
 
-A **RAG-powered** (Retrieval-Augmented Generation) application inspired by Google NotebookLM. Upload any PDF or text document and have a natural-language conversation with it — answers are **grounded in the document's content**, not hallucinated by the LLM.
+NexusRAG is a highly advanced, intelligent document analysis platform powered by **Corrective Retrieval-Augmented Generation (CRAG)**. It allows users to upload documents (PDF/TXT) and interact with them in real-time. 
 
-🔗 **[Live Demo →](https://notebookllm-rag.onrender.com)**  ·  **[GitHub →](https://github.com/Abhinavsuri90/notebookllm_rag)**
+Unlike standard RAG pipelines, NexusRAG evaluates every retrieved chunk of information to ensure absolute relevance, drastically reducing hallucinations and ensuring the AI only answers strictly based on the provided context.
 
-![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4.1--mini-blue)
-![Qdrant](https://img.shields.io/badge/Vector_DB-Qdrant-red)
-![LangChain](https://img.shields.io/badge/LangChain-JS-yellow)
+![NexusRAG Interface](https://img.shields.io/badge/UI-Glassmorphism-blue?style=for-the-badge)
+![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20|%20Express%20|%20Qdrant%20|%20Langchain-success?style=for-the-badge)
+![AI Models](https://img.shields.io/badge/Models-DeepSeek_V3_Flash-orange?style=for-the-badge)
 
----
+## 🌟 Key Features
 
-## 🎯 Features
+*   **Corrective RAG (CRAG) Pipeline:**
+    *   **Intelligent Retrieval:** Uses `OpenAIEmbeddings` to semantically match your query with indexed document chunks.
+    *   **LLM-Powered Grading Step:** Before generating an answer, a fast evaluator LLM grades each retrieved chunk. Irrelevant chunks are discarded immediately.
+    *   **Strict Grounding:** If no chunks are relevant, the system gracefully falls back without hallucinating.
+*   **World-Class Premium UI:** 
+    *   Designed with zero external frameworks (Pure HTML/CSS/JS).
+    *   Deep **Glassmorphism** effects, animated mesh gradients, and a sleek dark-mode aesthetic.
+    *   Live visualizations of the CRAG Evaluation step directly in the chat interface.
+*   **Cutting-Edge Models:** Fully integrated with OpenRouter to utilize advanced reasoning models like **DeepSeek V4/Flash** or **Claude 3.5 Sonnet**.
+*   **Vector Storage:** High-performance vector indexing using **Qdrant Cloud**.
 
-- **Upload Documents** — Supports PDF and plain text files (up to 20 MB)
-- **Full RAG Pipeline** — Ingestion → Chunking → Embedding → Storage → Retrieval → Generation
-- **Intelligent Chunking** — Recursive Character Text Splitter with configurable chunk size & overlap
-- **Vector Search** — Qdrant vector database for fast, semantic similarity retrieval
-- **Grounded Answers** — LLM answers strictly from document context with page citations
-- **Beautiful Web UI** — Dark-mode glassmorphism design with animations
-- **Real-time Pipeline Visualization** — Watch each RAG step as it processes
-
----
-
-## 🏗️ Architecture & RAG Pipeline
-
-```
-┌──────────┐    ┌──────────┐    ┌────────────┐    ┌────────┐    ┌───────────┐    ┌────────────┐
-│  Upload  │ →  │  Parse   │ →  │   Chunk    │ →  │ Embed  │ →  │   Store   │ →  │  Retrieve  │
-│  PDF/TXT │    │  Document│    │  (RecChar) │    │ (OpenAI│    │  (Qdrant) │    │  + Generate│
-└──────────┘    └──────────┘    └────────────┘    └────────┘    └───────────┘    └────────────┘
-```
-
-### Pipeline Steps
-
-1. **Ingestion** — User uploads a PDF or TXT file via the web interface
-2. **Parsing** — PDF files are parsed with `pdf-parse` (via LangChain's `PDFLoader`); TXT files are read directly
-3. **Chunking** — Documents are split using the **Recursive Character Text Splitter**
-4. **Embedding** — Each chunk is embedded using OpenAI's `text-embedding-3-large` model (3072 dimensions)
-5. **Storage** — Embeddings are stored in a **Qdrant** vector database (each document gets its own collection)
-6. **Retrieval** — User queries are embedded and the top-5 most similar chunks are retrieved via cosine similarity
-7. **Generation** — Retrieved chunks are injected as context into **GPT-4.1-mini**, which generates a grounded answer
-
----
-
-## 📐 Chunking Strategy — Recursive Character Text Splitter
-
-We use the **Recursive Character Text Splitter** from LangChain, which is the recommended general-purpose text splitter.
-
-### How It Works
-
-The splitter attempts to split text by trying a list of separators in order of priority:
-
-1. `\n\n` — Double newline (paragraph breaks)
-2. `\n` — Single newline
-3. ` ` — Space (word boundary)
-4. `""` — Character-by-character (last resort)
-
-It starts with the most semantically meaningful boundary and falls back to smaller ones only if a chunk exceeds the target size.
-
-### Parameters
-
-| Parameter | Value | Rationale |
-|-----------|-------|-----------|
-| `chunkSize` | 1000 chars | Balances context richness with retrieval precision |
-| `chunkOverlap` | 200 chars | Ensures no information is lost at chunk boundaries |
-
-### Why This Strategy?
-
-- **Preserves meaning** — Splits on natural text boundaries (paragraphs, sentences)
-- **Handles varied content** — Works well with structured and unstructured documents
-- **Overlap prevents loss** — 200-char overlap ensures continuous context across chunks
-- **Metadata preserved** — Each chunk retains its source page number for citation
-
----
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-
-- **Node.js** v18+
-- **OpenAI API Key** — [Get one here](https://platform.openai.com/api-keys)
-- **Qdrant** — Either:
-  - [Qdrant Cloud](https://cloud.qdrant.io/) (free tier available, recommended for deployment)
-  - Local Qdrant via Docker: `docker run -p 6333:6333 qdrant/qdrant`
+*   Node.js (v18+)
+*   An OpenRouter API Key
+*   A Qdrant Cloud Cluster URL and API Key
 
 ### Installation
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/Abhinavsuri90/notebookllm_rag.git
-cd notebookllm_rag
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Abhinavsuri90/corrective_rag-notebook.git
+   cd corrective_rag-notebook
+   ```
 
-# 2. Install dependencies
-npm install --legacy-peer-deps
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-# 3. Configure environment variables
-cp .env.example .env
-# Edit .env with your API keys
+3. **Configure Environment Variables:**
+   Rename `.env.example` to `.env` and fill in your details:
+   ```env
+   # OpenRouter Configuration
+   OPENAI_API_KEY=your_openrouter_api_key
+   OPENAI_BASE_URL=https://openrouter.ai/api/v1
 
-# 4. Start the server
-npm start
-```
+   # Qdrant Vector Database
+   QDRANT_URL=your_qdrant_cluster_url
+   QDRANT_API_KEY=your_qdrant_api_key
 
-### Environment Variables
+   # Server
+   PORT=3000
+   ```
 
-Create a `.env` file in the project root:
+4. **Start the application:**
+   ```bash
+   npm start
+   ```
 
-```env
-OPENAI_API_KEY=sk-your-openai-api-key
-QDRANT_URL=https://your-cluster.cloud.qdrant.io:6333
-QDRANT_API_KEY=your-qdrant-api-key
-PORT=3000
-```
+5. **Open your browser:** Navigate to `http://localhost:3000`
 
-### Run Locally
+## 🧠 Architecture Overview
 
-```bash
-# Production
-npm start
-
-# Development (auto-reload on changes)
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## 🌐 Deployment
-
-The app is designed to be deployed on any Node.js hosting platform. Recommended options:
-
-- **Render** — Free tier, auto-deploy from GitHub
-- **Railway** — Easy Node.js deploys
-- **Vercel** (Serverless) — Requires adaptation
-
-Make sure to set all environment variables in your hosting platform's dashboard.
-
----
-
-## 📁 Project Structure
-
-```
-notebooklm-rag/
-├── server.js           # Express server — full RAG backend
-├── public/
-│   ├── index.html      # Web UI — semantic HTML
-│   ├── style.css       # Premium dark-mode styles
-│   └── app.js          # Frontend logic
-├── package.json        # Dependencies & scripts
-├── .env.example        # Environment variable template
-├── .gitignore          # Ignored files
-└── README.md           # Documentation (this file)
-```
-
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| **Runtime** | Node.js |
-| **Server** | Express.js |
-| **LLM** | OpenAI GPT-4.1-mini |
-| **Embeddings** | OpenAI text-embedding-3-large |
-| **Vector DB** | Qdrant |
-| **Orchestration** | LangChain.js |
-| **PDF Parsing** | pdf-parse |
-| **Frontend** | Vanilla HTML/CSS/JS |
-
----
-
-## 📝 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/upload` | Upload and process a document |
-| `POST` | `/api/chat` | Ask a question about the document |
-| `GET` | `/api/documents` | List all uploaded documents |
-| `GET` | `/health` | Health check |
-
----
+1.  **Ingestion & Chunking:** Uploaded files are parsed and split using `RecursiveCharacterTextSplitter`.
+2.  **Embedding:** Text chunks are embedded and pushed to Qdrant for fast similarity search.
+3.  **Retrieval:** The system retrieves the top-k chunks matching the user's query.
+4.  **Evaluation (The CRAG Step):** An LLM grades each chunk (`"yes"` or `"no"` for relevance).
+5.  **Generation:** The final answer is synthesized using *only* the chunks that passed the evaluation step.
 
 ## 📄 License
-
-ISC
+ISC License.
