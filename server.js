@@ -269,7 +269,7 @@ Answer ONLY with 'yes' or 'no'.`;
 
       try {
         const evalResponse = await getOpenAI().chat.completions.create({
-          model: "deepseek/deepseek-chat",
+          model: "minimax/minimax-m3",
           messages: [{ role: "user", content: gradingPrompt }],
           temperature: 0,
         });
@@ -320,7 +320,7 @@ DOCUMENT CONTEXT:
 ${context}`;
 
     const response = await getOpenAI().chat.completions.create({
-      model: "deepseek/deepseek-chat",
+      model: "minimax/minimax-m3",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: query },

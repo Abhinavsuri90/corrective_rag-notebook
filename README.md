@@ -6,7 +6,7 @@ Unlike standard RAG pipelines, NexusRAG evaluates every retrieved chunk of infor
 
 ![NexusRAG Interface](https://img.shields.io/badge/UI-Glassmorphism-blue?style=for-the-badge)
 ![Tech Stack](https://img.shields.io/badge/Stack-Node.js%20|%20Express%20|%20Qdrant%20|%20Langchain-success?style=for-the-badge)
-![AI Models](https://img.shields.io/badge/Models-DeepSeek_V3_Flash-orange?style=for-the-badge)
+![AI Models](https://img.shields.io/badge/Models-MiniMax_M3-orange?style=for-the-badge)
 
 ## 🌟 Key Features
 
@@ -18,7 +18,7 @@ Unlike standard RAG pipelines, NexusRAG evaluates every retrieved chunk of infor
     *   Designed with zero external frameworks (Pure HTML/CSS/JS).
     *   Deep **Glassmorphism** effects, animated mesh gradients, and a sleek dark-mode aesthetic.
     *   Live visualizations of the CRAG Evaluation step directly in the chat interface.
-*   **Cutting-Edge Models:** Fully integrated with OpenRouter to utilize advanced reasoning models like **DeepSeek V4/Flash** or **Claude 3.5 Sonnet**.
+*   **Cutting-Edge Models:** Fully integrated with OpenRouter to utilize advanced reasoning models like **MiniMax-M3** (minimax/minimax-m3).
 *   **Vector Storage:** High-performance vector indexing using **Qdrant Cloud**.
 
 ## 🚀 Quick Start
