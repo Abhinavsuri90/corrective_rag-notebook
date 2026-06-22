@@ -33,6 +33,7 @@ function hide(el) { el.classList.add("hidden"); }
 
 function formatAnswer(text) {
   return text
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" class="web-citation-link">$1</a>')
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/^[-•]\s+(.+)$/gm, "<li>$1</li>")
@@ -189,8 +190,14 @@ chatForm.addEventListener("submit", async e => {
 
 function addMessage(text, role) {
   const wrap = document.createElement("div");
-  wrap.className = `message msg-${role}`;
-  wrap.innerHTML = role === "user" ? escapeHtml(text) : formatAnswer(text);
+  wrap.className = `message msg-role`;
+  if (role === "user") {
+    wrap.classList.add("msg-user");
+    wrap.innerHTML = escapeHtml(text);
+  } else {
+    wrap.classList.add("msg-ai");
+    wrap.innerHTML = formatAnswer(text);
+  }
   chatMessages.appendChild(wrap);
 }
 
@@ -200,30 +207,109 @@ function addAiMessage(data) {
   
   let html = "";
   
-  // Render CRAG Evaluation Block
-  if (data.evaluation) {
-    const { total, accepted, rejected } = data.evaluation;
+  // Render CRAG Pipeline Trace (if path is provided)
+  if (data.path) {
+    let pathLabel = "";
+    let pathClass = "";
+    switch (data.path) {
+      case "DOCUMENT_ONLY":
+        pathLabel = "Document Only • Grounded Response";
+        pathClass = "path-document-only";
+        break;
+      case "DOCUMENT_AND_SEARCH":
+        pathLabel = "Document & Web Search • Complementary";
+        pathClass = "path-document-and-search";
+        break;
+      case "SEARCH_ONLY":
+        pathLabel = "Web Search • Corrective Fallback";
+        pathClass = "path-search-only";
+        break;
+    }
+
     html += `
-      <div class="crag-eval-block">
-        <div class="crag-header">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          CRAG Source Evaluation
+      <details class="crag-trace-details" open>
+        <summary class="crag-trace-summary">
+          <span>🔍 CRAG Trace: ${escapeHtml(data.path)}</span>
+        </summary>
+        <div class="crag-trace-content">
+          <div class="crag-pathway-section">
+            <span class="crag-pathway-title">Execution Pathway:</span>
+            <span class="crag-path-badge ${pathClass}">${escapeHtml(pathLabel)}</span>
+          </div>
+    `;
+
+    // Render evaluated chunks
+    if (data.evaluations && data.evaluations.length > 0) {
+      html += `
+        <div>
+          <div class="crag-eval-title">Local Source Evaluation:</div>
+          <div class="crag-source-grid">
+      `;
+      data.evaluations.forEach((ec) => {
+        let gradeClass = "";
+        switch (ec.grade) {
+          case "CORRECT": gradeClass = "grade-correct"; break;
+          case "AMBIGUOUS": gradeClass = "grade-ambiguous"; break;
+          case "INCORRECT": gradeClass = "grade-incorrect"; break;
+        }
+        html += `
+          <div class="crag-source-card">
+            <div class="crag-source-header">
+              <span class="crag-source-meta">Chunk ${ec.index} (Page ${escapeHtml(String(ec.page))})</span>
+              <span class="grade-badge ${gradeClass}">${escapeHtml(ec.grade)}</span>
+            </div>
+            <div class="crag-source-reason">${escapeHtml(ec.reason)}</div>
+            <div class="crag-source-snippet">${escapeHtml(ec.text)}</div>
+          </div>
+        `;
+      });
+      html += `
+          </div>
         </div>
-        <div class="crag-stats">
-          <div class="crag-stat">Total Retrieved: ${total}</div>
-          <div class="crag-stat accepted">Relevant: ${accepted}</div>
-          <div class="crag-stat rejected">Discarded: ${rejected}</div>
+      `;
+    }
+
+    // Render rewritten search query
+    if (data.searchQuery) {
+      html += `
+        <div class="crag-query-section">
+          <div class="crag-query-title">Query Generator (Search Engine Optimized):</div>
+          <div class="crag-query-value">"${escapeHtml(data.searchQuery)}"</div>
         </div>
-      </div>
+      `;
+    }
+
+    // Render web search results
+    if (data.webResults && data.webResults.length > 0) {
+      html += `
+        <div class="crag-web-results">
+          <div class="crag-web-title">Web Retrieval Snippets:</div>
+      `;
+      data.webResults.forEach((r) => {
+        html += `
+          <div class="crag-web-item">
+            <div class="crag-web-header">
+              <a href="${escapeHtml(r.url)}" target="_blank" class="crag-web-link">${escapeHtml(r.title)}</a>
+            </div>
+            <div class="crag-web-snippet">${escapeHtml(r.snippet)}</div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    }
+
+    html += `
+        </div>
+      </details>
     `;
   }
   
   // Render Answer
   html += formatAnswer(data.answer);
   
-  // Render Sources
+  // Render Local Sources Used
   if (data.sources && data.sources.length) {
-    html += `<div class="sources-list"><strong>Sources used:</strong>`;
+    html += `<div class="sources-list"><strong>Local document sources used:</strong>`;
     data.sources.forEach(s => {
       html += `<div class="source-item">Page ${escapeHtml(String(s.page))}: ${escapeHtml(s.preview)}</div>`;
     });

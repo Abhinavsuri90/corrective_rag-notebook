@@ -650,3 +650,282 @@ body {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
 }
+
+/* --- CRAG Pipeline Trace Styles --- */
+
+.crag-trace-details {
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: rgba(10, 10, 12, 0.4);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.crag-trace-details[open] {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.crag-trace-summary {
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.crag-trace-summary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.crag-trace-summary::after {
+  content: "▼";
+  font-size: 0.65rem;
+  transition: transform 0.2s ease;
+}
+
+.crag-trace-details[open] .crag-trace-summary::after {
+  transform: rotate(180deg);
+}
+
+.crag-trace-content {
+  padding: 1.25rem;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Pathway Styling */
+.crag-pathway-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.crag-pathway-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.crag-path-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.path-document-only {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.path-document-and-search {
+  background: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.path-search-only {
+  background: rgba(6, 182, 212, 0.1);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+/* Grader Evaluations Grid */
+.crag-eval-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.crag-source-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.crag-source-card {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+.crag-source-card:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.crag-source-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crag-source-meta {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.grade-badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.grade-correct {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.grade-ambiguous {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.grade-incorrect {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.crag-source-reason {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.crag-source-snippet {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.15);
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+/* Query Generator */
+.crag-query-section {
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.crag-query-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.crag-query-value {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  word-break: break-all;
+}
+
+/* Web Search Results styling */
+.crag-web-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.crag-web-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.crag-web-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.crag-web-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crag-web-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #60a5fa;
+  text-decoration: none;
+  transition: color 0.2s ease, text-decoration 0.2s;
+}
+
+.crag-web-link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.crag-web-snippet {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Web Citation Links in text */
+.web-citation-link {
+  color: #60a5fa;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(96, 165, 250, 0.4);
+  padding: 0 2px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.web-citation-link:hover {
+  color: #93c5fd;
+  background: rgba(96, 165, 250, 0.1);
+  border-bottom-style: solid;
+}
