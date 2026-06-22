@@ -305,12 +305,50 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     // Clean up the uploaded file from disk
     fs.unlinkSync(filePath);
 
+    // Generate AI suggestions specifically tailored to the document content
+    let suggestions = [
+      "What is the main topic of this document?",
+      "What are the key takeaways?"
+    ];
+    if (chunks.length > 0) {
+      try {
+        console.log("   ✔ Generating document suggestions...");
+        const sampleText = chunks.slice(0, 3).map(c => c.pageContent).join("\n\n");
+        const suggestionPrompt = `You are an AI assistant. Analyze the following sample text from a newly uploaded document:
+---
+${sampleText.substring(0, 4000)}
+---
+
+Generate exactly 3 specific, interesting, and diverse questions that a user might want to ask about this document.
+Respond ONLY with a JSON array of strings containing the questions. Do not include markdown code block formatting (like \`\`\`json). Example format:
+["What is X?", "How does Y function?", "Why is Z important?"]`;
+
+        const suggestionResponse = await getOpenAI().chat.completions.create({
+          model: "minimax/minimax-m3",
+          messages: [{ role: "user", content: suggestionPrompt }],
+          temperature: 0.5,
+        });
+
+        let sContent = suggestionResponse.choices[0].message.content.trim();
+        if (sContent.startsWith("```")) {
+          sContent = sContent.replace(/^```json\s*/, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
+        }
+        const parsedSuggestions = JSON.parse(sContent);
+        if (Array.isArray(parsedSuggestions) && parsedSuggestions.length > 0) {
+          suggestions = parsedSuggestions;
+        }
+      } catch (err) {
+        console.error("Failed to generate custom suggestions, defaulting:", err);
+      }
+    }
+
     res.json({
       success: true,
       collectionName,
       originalName,
       chunkCount: chunks.length,
       pageCount: docs.length,
+      suggestions
     });
   } catch (err) {
     console.error("Upload error:", err);
@@ -335,7 +373,21 @@ app.post("/api/chat", async (req, res) => {
 
     console.log(`💬 Query: "${query}" → collection: ${collectionName}`);
 
-    // Step 1 — Retrieval: find the top-k most relevant chunks
+    // Set headers for Server-Sent Events (SSE)
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    const sendProgress = (message) => {
+      res.write(`data: ${JSON.stringify({ type: "progress", message })}\n\n`);
+    };
+
+    const sendResult = (data) => {
+      res.write(`data: ${JSON.stringify({ type: "result", data })}\n\n`);
+    };
+
+    // Step 1 — Retrieval
+    sendProgress("Retrieving relevant chunks from vector store...");
     const qdrantConfig = {
       collectionName,
     };
@@ -357,6 +409,7 @@ app.post("/api/chat", async (req, res) => {
     console.log(`   ✔ Retrieved ${relevantChunks.length} chunk(s), starting CRAG evaluation...`);
 
     // Step 2 — 3-State Grader Step
+    sendProgress("Grading chunk relevance with 3-state evaluator...");
     const evaluationPromises = relevantChunks.map(async (chunk) => {
       const gradingPrompt = `You are a professional assessor grading the relevance of a retrieved document to a user question.
 User question: "${query}"
@@ -432,6 +485,7 @@ You MUST respond ONLY with a JSON object. Do not include markdown code block syn
     let searchQuery = "";
     let webResults = [];
     if (path === "DOCUMENT_AND_SEARCH" || path === "SEARCH_ONLY") {
+      sendProgress("Formulating optimized search query for web search...");
       const queryGenPrompt = `You are a search query generator. Analyze the user's question and generate a single search query optimized for search engines (like Google or DuckDuckGo) to find the missing or complementary information. Do not add search operators (like site: or OR).
   
 User question: "${query}"
@@ -448,6 +502,7 @@ Return ONLY the raw search query string. Do not wrap it in quotes, do not add in
         console.log(`   ✔ Generated Web Search Query: "${searchQuery}"`);
         
         // Step 5 — Execute Web Search
+        sendProgress(`Executing corrective search for: "${searchQuery}"...`);
         webResults = await searchWeb(searchQuery);
       } catch (err) {
         console.error("Query generation or search error:", err);
@@ -469,6 +524,7 @@ Return ONLY the raw search query string. Do not wrap it in quotes, do not add in
     }
 
     // Step 7 — Generation: send context + query to the LLM
+    sendProgress("Synthesizing final response...");
     const systemPrompt = `You are a helpful AI assistant that answers questions based on the provided context.
     
 RULES:
@@ -505,9 +561,10 @@ ${context}`;
     const sources = [...correctChunks, ...ambiguousChunks].map((chunk) => ({
       page: chunk.metadata?.loc?.pageNumber ?? chunk.metadata?.page ?? "N/A",
       preview: chunk.pageContent.substring(0, 150) + "…",
+      text: chunk.pageContent, // Include full text for sliding citation sidebar
     }));
 
-    res.json({
+    sendResult({
       answer,
       path,
       searchQuery,
@@ -515,9 +572,15 @@ ${context}`;
       evaluations,
       sources
     });
+    res.end();
   } catch (err) {
     console.error("Chat error:", err);
-    res.status(500).json({ error: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.write(`data: ${JSON.stringify({ type: "error", error: err.message })}\n\n`);
+      res.end();
+    }
   }
 });
 

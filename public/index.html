@@ -105,6 +105,37 @@
       </section>
     </main>
   </div>
+
+  <!-- Sidebar backdrop for citation preview -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop hidden"></div>
+
+  <!-- Sliding Source Sidebar -->
+  <div id="source-sidebar" class="source-sidebar hidden">
+    <div class="sidebar-header">
+      <div class="sidebar-title-group">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <h3>Source Explorer</h3>
+      </div>
+      <button id="close-sidebar-btn" class="close-sidebar-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sidebar-content">
+      <div class="sidebar-meta">
+        <span class="meta-label">Source Document Page:</span>
+        <span id="sidebar-page-num" class="meta-value">-</span>
+      </div>
+      <div class="sidebar-section">
+        <h4 class="section-title">Grading Reasoning</h4>
+        <div id="sidebar-grading-reason" class="reason-box">-</div>
+      </div>
+      <div class="sidebar-section">
+        <h4 class="section-title">Source Text Chunk</h4>
+        <div id="sidebar-chunk-text" class="text-box">-</div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
